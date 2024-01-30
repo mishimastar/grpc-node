@@ -49,9 +49,9 @@ export interface IntermediateObjectWritable<T> extends Writable {
 }
 
 export interface ObjectWritable<T> extends IntermediateObjectWritable<T> {
-  _write(chunk: T | Buffer, encoding: string, callback: Function): void;
-  write(chunk: T | Buffer, cb?: Function): boolean;
-  write(chunk: T | Buffer, encoding?: any, cb?: Function): boolean;
+  _write(chunk: T, encoding: string, callback: Function): void;
+  write(chunk: T, cb?: Function): boolean;
+  write(chunk: T, encoding?: any, cb?: Function): boolean;
   setDefaultEncoding(encoding: string): this;
   end(): ReturnType<Writable['end']> extends Writable ? this : void;
   end(

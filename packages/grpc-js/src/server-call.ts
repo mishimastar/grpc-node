@@ -90,6 +90,16 @@ export type ServerSurfaceCall = {
   getPath(): string;
 } & EventEmitter;
 
+export type ServerWritableBuffer<ResponseType> = {
+  _write(
+    chunk: ResponseType | Buffer,
+    encoding: string,
+    callback: Function
+  ): void;
+  write(chunk: ResponseType | Buffer, cb?: Function): boolean;
+  write(chunk: ResponseType | Buffer, encoding?: any, cb?: Function): boolean;
+};
+
 export type ServerUnaryCall<RequestType, ResponseType> = ServerSurfaceCall & {
   request: RequestType;
 };
@@ -97,13 +107,15 @@ export type ServerReadableStream<RequestType, ResponseType> =
   ServerSurfaceCall & ObjectReadable<RequestType>;
 export type ServerWritableStream<RequestType, ResponseType> =
   ServerSurfaceCall &
-    ObjectWritable<ResponseType> & {
+    ObjectWritable<ResponseType> &
+    ServerWritableBuffer<ResponseType> & {
       request: RequestType;
       end: (metadata?: Metadata) => void;
     };
 export type ServerDuplexStream<RequestType, ResponseType> = ServerSurfaceCall &
   ObjectReadable<RequestType> &
-  ObjectWritable<ResponseType> & { end: (metadata?: Metadata) => void };
+  ObjectWritable<ResponseType> &
+  ServerWritableBuffer<ResponseType> & { end: (metadata?: Metadata) => void };
 
 export class ServerUnaryCallImpl<RequestType, ResponseType>
   extends EventEmitter
