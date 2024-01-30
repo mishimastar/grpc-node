@@ -669,7 +669,7 @@ export class Http2ServerCallStream<
   serializeMessage(value: ResponseType | Buffer) {
     // TODO(cjihrig): Call compression aware serializeMessage().
 
-    if (value instanceof Buffer) {
+    if (Buffer.isBuffer(value)) {
       return this.serializeMessageHandleBuffer(value);
     }
 
