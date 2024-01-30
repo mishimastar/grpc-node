@@ -222,7 +222,7 @@ export class ServerWritableStreamImpl<RequestType, ResponseType>
   }
 
   _write(
-    chunk: ResponseType,
+    chunk: ResponseType | Buffer,
     encoding: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     callback: (...args: any[]) => void
@@ -654,15 +654,38 @@ export class Http2ServerCallStream<
     }
   }
 
-  serializeMessage(value: ResponseType) {
-    const messageBuffer = this.handler.serialize(value);
-
+  serializeMessage(value: ResponseType | Buffer) {
     // TODO(cjihrig): Call compression aware serializeMessage().
-    const byteLength = messageBuffer.byteLength;
+
+    if (value instanceof Buffer) {
+      return this.serializeMessageHandleBuffer(value);
+    }
+
+    const messageBuffer = this.handler.serialize(value);
+    return this.addCompressionAndLength(messageBuffer);
+  }
+
+  private serializeMessageHandleBuffer(value: Buffer): Buffer {
+    const byteLength = value.byteLength;
+    // checking if this is a protobuf message or a gRPC frame
+    if (
+      byteLength >= 5 &&
+      (value.readUInt8(0) === 0 || value.readUint8(0) === 1) &&
+      value.readUInt32BE(1) === byteLength - 5
+    ) {
+      return value;
+    }
+
+    return this.addCompressionAndLength(value);
+  }
+
+  private addCompressionAndLength(value: Buffer, compressed = false) {
+    const byteLength = value.byteLength;
+    const compressionByte = compressed ? 1 : 0;
     const output = Buffer.allocUnsafe(byteLength + 5);
-    output.writeUInt8(0, 0);
+    output.writeUInt8(compressionByte, 0);
     output.writeUInt32BE(byteLength, 1);
-    messageBuffer.copy(output, 5);
+    value.copy(output, 5);
     return output;
   }
 
